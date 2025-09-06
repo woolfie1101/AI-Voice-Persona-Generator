@@ -16,6 +16,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ imageBase64, onCreateAgai
   const imageUrl = `data:image/png;base64,${imageBase64}`;
 
   const handleDownload = () => {
+    const filenameBase = generatorMode === 'spouse' ? 'ai-voice-spouse' : 'ai-voice-persona';
     const img = new Image();
     img.src = imageUrl;
     img.onload = () => {
@@ -40,7 +41,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ imageBase64, onCreateAgai
         const jpegUrl = canvas.toDataURL('image/jpeg', 0.9);
         const link = document.createElement('a');
         link.href = jpegUrl;
-        link.download = 'ai-voice-persona.jpg';
+        link.download = `${filenameBase}.jpg`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -48,7 +49,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ imageBase64, onCreateAgai
         // Fallback to original download if canvas fails
         const link = document.createElement('a');
         link.href = imageUrl;
-        link.download = 'ai-voice-persona.png';
+        link.download = `${filenameBase}.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -59,7 +60,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ imageBase64, onCreateAgai
       alert("Could not process image for download. Downloading original file.");
       const link = document.createElement('a');
       link.href = imageUrl;
-      link.download = 'ai-voice-persona.png';
+      link.download = `${filenameBase}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -67,15 +68,21 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ imageBase64, onCreateAgai
   };
 
   const handleShare = () => {
+    const isSpouseMode = generatorMode === 'spouse';
+    const filename = isSpouseMode ? 'ai-voice-spouse.png' : 'ai-voice-persona.png';
+    const title = isSpouseMode ? 'My AI Future Spouse' : 'My AI Voice Persona';
+    const text = isSpouseMode
+      ? 'Check out the future spouse I generated from my voice!'
+      : 'Check out the character I generated from my voice!';
+
     if (navigator.share) {
-      // Create a blob from the base64 string
       fetch(imageUrl)
         .then(res => res.blob())
         .then(blob => {
-          const file = new File([blob], 'ai-voice-persona.png', { type: 'image/png' });
+          const file = new File([blob], filename, { type: 'image/png' });
           navigator.share({
-            title: 'My AI Voice Persona',
-            text: 'Check out the character I generated from my voice!',
+            title: title,
+            text: text,
             files: [file],
           })
           .then(() => console.log('Successful share'))

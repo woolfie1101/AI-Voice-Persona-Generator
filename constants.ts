@@ -14,6 +14,18 @@ export const ART_STYLES: ArtStyle[] = [
     promptFragment: 'modern Japanese anime style, clean lines, vibrant colors, detailed hair, expressive character portrait'
   },
   {
+    id: 'japanese_magical_anime',
+    name: 'Japanese Magical Anime',
+    imageUrl: 'https://ygfmjafazvtghusieqwk.supabase.co/storage/v1/object/public/ai-image-get/japanese-magical-anime.jpg',
+    promptFragment: 'Classic magical girl anime style, bright and colorful, with dynamic poses and expressive characters, reminiscent of early 2000s animation, featuring large, sparkling eyes and charming outfits.'
+  },
+  {
+    id: 'illustration',
+    name: 'Illustration Style',
+    imageUrl: 'https://ygfmjafazvtghusieqwk.supabase.co/storage/v1/object/public/ai-image-get/illustration.jpg',
+    promptFragment: 'Vibrant anime illustration, highly detailed, trending on ArtStation, with a character exuding a distinct personality, a blend of sharp features and soft rendering, dramatic lighting, and a rich color palette.'
+  },
+  {
     id: 'ghibli',
     name: 'Ghibli Studio',
     imageUrl: 'https://ygfmjafazvtghusieqwk.supabase.co/storage/v1/object/public/ai-image-get/ghibli-studio.jpg',
@@ -77,7 +89,7 @@ export const ART_STYLES: ArtStyle[] = [
     id: 'sailor_moon',
     name: 'Sailor Moon',
     imageUrl: 'https://ygfmjafazvtghusieqwk.supabase.co/storage/v1/object/public/ai-image-get/sailor-moon.jpg',
-    promptFragment: '90s Sailor Moon anime style, shoujo aesthetic, large sparkly eyes, long flowing hair, pastel color palette, magical girl theme'
+    promptFragment: '90s retro anime art style, large expressive and beautiful eyes, soft pastel color palette, shimmery and sparkling magical atmosphere, elegant and graceful pose. IMPORTANT: Do not draw the character Sailor Moon, apply the art style to the generated character.'
   },
   {
     id: 'powerpuff_girls',
@@ -110,6 +122,17 @@ export const ART_STYLES: ArtStyle[] = [
     promptFragment: 'K-pop idol stage performance photo style, dynamic and colorful stage lighting, stylish stage outfits and accessories, professional idol makeup and hairstyles, high-energy performance pose, photorealistic'
   }
 ];
+
+export const SPOUSE_EXAMPLES = [
+  { id: 'spouse_ex_1', name: 'Spouse Example 1', imageUrl: 'https://ygfmjafazvtghusieqwk.supabase.co/storage/v1/object/public/ai-image-get/future1.jpg' },
+  { id: 'spouse_ex_2', name: 'Spouse Example 2', imageUrl: 'https://ygfmjafazvtghusieqwk.supabase.co/storage/v1/object/public/ai-image-get/future2.jpg' },
+  { id: 'spouse_ex_3', name: 'Spouse Example 3', imageUrl: 'https://ygfmjafazvtghusieqwk.supabase.co/storage/v1/object/public/ai-image-get/future3.jpg' },
+  { id: 'spouse_ex_4', name: 'Spouse Example 4', imageUrl: 'https://ygfmjafazvtghusieqwk.supabase.co/storage/v1/object/public/ai-image-get/future4.jpg' },
+  { id: 'spouse_ex_5', name: 'Spouse Example 5', imageUrl: 'https://ygfmjafazvtghusieqwk.supabase.co/storage/v1/object/public/ai-image-get/future5.jpg' },
+  { id: 'spouse_ex_6', name: 'Spouse Example 6', imageUrl: 'https://ygfmjafazvtghusieqwk.supabase.co/storage/v1/object/public/ai-image-get/future6.jpg' },
+  { id: 'spouse_ex_7', name: 'Spouse Example 7', imageUrl: 'https://ygfmjafazvtghusieqwk.supabase.co/storage/v1/object/public/ai-image-get/future7.jpg' },
+];
+
 
 export const LOADING_MESSAGES: string[] = [
   "Analyzing your vocal essence...",

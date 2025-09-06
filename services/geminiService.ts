@@ -122,7 +122,7 @@ export async function generateCharacterImage(analysis: VoiceAnalysisResult, styl
             const ethnicityAddition = getRandomEthnicity(analysis.characterProfile);
             description += ethnicityAddition;
 
-            const prompt = `Generate an image based on this description: ${description}. Strictly adhere to the artistic style of the provided image(s). High quality, detailed, character focus, 3:4 aspect ratio.`;
+            const prompt = `Generate an image based on this description: ${description}. Strictly adhere to the artistic style of the provided image(s). High quality, detailed, character focus.`;
             console.log("Generating image with predefined style image(s) and prompt:", prompt);
 
             const imageParts = style.referenceImages.map(img => ({
@@ -134,7 +134,7 @@ export async function generateCharacterImage(analysis: VoiceAnalysisResult, styl
 
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash-image-preview',
-                contents: { parts: [{ text: prompt }, ...imageParts] },
+                contents: { parts: [...imageParts, { text: prompt }] },
                 config: {
                     responseModalities: [Modality.IMAGE, Modality.TEXT],
                 },
@@ -154,18 +154,20 @@ export async function generateCharacterImage(analysis: VoiceAnalysisResult, styl
         const prompt = constructImagePrompt(analysis, style);
         console.log("Generating image with text prompt:", prompt);
 
-        const response = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
-            prompt: prompt,
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image-preview',
+            contents: { parts: [{ text: prompt }] },
             config: {
-                numberOfImages: 1,
-                outputMimeType: 'image/png',
-                aspectRatio: '3:4',
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
             },
         });
 
-        if (response.generatedImages?.[0]?.image?.imageBytes) {
-            return response.generatedImages[0].image.imageBytes;
+        if (response.candidates && response.candidates.length > 0) {
+            for (const part of response.candidates[0].content.parts) {
+                if (part.inlineData) {
+                    return part.inlineData.data;
+                }
+            }
         }
 
         console.error("Image generation failed. Model did not return an image.", response);
@@ -187,7 +189,7 @@ export async function generateCharacterImageFromStyleImage(
         const ethnicityAddition = getRandomEthnicity(analysis.characterProfile);
         description += ethnicityAddition;
         
-        const prompt = `Generate an image based on this description: ${description}. Strictly adhere to the artistic style of the provided image. High quality, detailed, character focus, 3:4 aspect ratio.`;
+        const prompt = `Generate an image based on this description: ${description}. Strictly adhere to the artistic style of the provided image. High quality, detailed, character focus.`;
         console.log("Generating image with style image and prompt:", prompt);
         
         const imagePart = {
@@ -199,7 +201,7 @@ export async function generateCharacterImageFromStyleImage(
 
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image-preview',
-            contents: { parts: [{ text: prompt }, imagePart] },
+            contents: { parts: [imagePart, { text: prompt }] },
             config: {
                 responseModalities: [Modality.IMAGE, Modality.TEXT],
             },
@@ -277,16 +279,14 @@ export async function generateSpouseImage(audioBase64: string, mimeType: string)
         const ethnicityAddition = getRandomEthnicity(analysis.userProfile);
 
         const selfieStyleFragment = 'realistic selfie style, taken from a phone camera angle, casual expression, natural lighting, modern background, photorealistic';
-        const finalPrompt = `Generate an image of ${partnerDescription}${ethnicityAddition}. The image should be in a ${selfieStyleFragment}. High quality, detailed, character focus, happy and approachable, 3:4 aspect ratio.`;
+        const finalPrompt = `Generate an image of ${partnerDescription}${ethnicityAddition}, who has a beautiful and handsome face with aesthetically pleasing, well-proportioned features. The image should be in a ${selfieStyleFragment}. High quality, detailed, character focus, happy and approachable.`;
 
         console.log("Generating spouse image with prompt:", finalPrompt);
 
         // Step 3: Generate the image
         const imageResponse = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image-preview',
-            contents: {
-                parts: [{ text: finalPrompt }]
-            },
+            contents: { parts: [{ text: finalPrompt }] },
             config: {
                 responseModalities: [Modality.IMAGE, Modality.TEXT],
             },
@@ -300,7 +300,7 @@ export async function generateSpouseImage(audioBase64: string, mimeType: string)
             }
         }
 
-        console.error("Spouse image generation failed. Model did not return an image part.", imageResponse);
+        console.error("Spouse image generation failed. Model did not return an image.", imageResponse);
         throw new Error("No image was generated for the future spouse.");
 
     } catch (error) {
