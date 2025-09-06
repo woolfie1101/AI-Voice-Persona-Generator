@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DownloadIcon, ShareIcon, RedoIcon } from './Icons';
 import StyleCarousel from './StyleCarousel';
 import { ArtStyle, GeneratorMode } from '../types';
@@ -14,6 +14,7 @@ interface ResultDisplayProps {
 
 const ResultDisplay: React.FC<ResultDisplayProps> = ({ imageBase64, onCreateAgain, onStyleSelect, onStyleImageSelect, selectedStyleId, generatorMode }) => {
   const imageUrl = `data:image/png;base64,${imageBase64}`;
+  const [showCopySuccess, setShowCopySuccess] = useState(false);
 
   const handleDownload = () => {
     const filenameBase = generatorMode === 'spouse' ? 'ai-voice-spouse' : 'ai-voice-persona';
@@ -67,29 +68,19 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ imageBase64, onCreateAgai
     };
   };
 
-  const handleShare = () => {
-    const isSpouseMode = generatorMode === 'spouse';
-    const filename = isSpouseMode ? 'ai-voice-spouse.png' : 'ai-voice-persona.png';
-    const title = isSpouseMode ? 'My AI Future Spouse' : 'My AI Voice Persona';
-    const text = isSpouseMode
-      ? 'Check out the future spouse I generated from my voice!'
-      : 'Check out the character I generated from my voice!';
+  const handleShare = async () => {
+    const appUrl = 'https://ai-voice-persona-generator-889563220811.us-west1.run.app/';
+    const textToCopy = generatorMode === 'spouse'
+      ? `Check out the future spouse I created with the AI Voice Persona Generator!\n\nCreate your own here: ${appUrl}`
+      : `Check out the character I created with the AI Voice Persona Generator!\n\nCreate your own here: ${appUrl}`;
 
-    if (navigator.share) {
-      fetch(imageUrl)
-        .then(res => res.blob())
-        .then(blob => {
-          const file = new File([blob], filename, { type: 'image/png' });
-          navigator.share({
-            title: title,
-            text: text,
-            files: [file],
-          })
-          .then(() => console.log('Successful share'))
-          .catch((error) => console.log('Error sharing', error));
-        });
-    } else {
-      alert("Sharing is not supported on your browser. You can download the image and share it manually.");
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      setShowCopySuccess(true);
+      setTimeout(() => setShowCopySuccess(false), 2500);
+    } catch (err) {
+      console.error('Failed to copy link to clipboard:', err);
+      alert('Failed to copy link. Please try again.');
     }
   };
 
@@ -99,12 +90,19 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ imageBase64, onCreateAgai
       <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 mb-6">
         {generatorMode === 'persona' ? 'Here Is Your Persona!' : 'Meet Your Future Spouse!'}
       </h2>
-      <div className="mb-6 rounded-lg overflow-hidden shadow-lg border-2 border-purple-500/50 max-w-sm mx-auto">
+      <div className="relative mb-6 rounded-lg overflow-hidden shadow-lg border-2 border-purple-500/50 max-w-sm mx-auto">
         <img 
           src={imageUrl} 
           alt="Generated AI Persona" 
           className="w-full h-auto object-contain"
         />
+        {showCopySuccess && (
+            <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center transition-opacity duration-300 animate-fade-in">
+                <div className="bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 py-2 px-5 rounded-lg shadow-xl">
+                    <p className="font-bold">Link copied to clipboard!</p>
+                </div>
+            </div>
+        )}
       </div>
       <div className="flex flex-col sm:flex-row justify-center gap-4 mb-8">
         <button
@@ -119,7 +117,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ imageBase64, onCreateAgai
           className="group inline-flex items-center justify-center px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-full transition-colors duration-300"
         >
           <ShareIcon className="w-5 h-5 mr-2" />
-          Share
+          Copy Link
         </button>
         <button
           onClick={onCreateAgain}

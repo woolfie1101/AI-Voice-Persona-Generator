@@ -8,6 +8,7 @@ import LoadingScreen from './components/LoadingScreen';
 import ResultDisplay from './components/ResultDisplay';
 import ThemeToggle from './components/ThemeToggle';
 import { analyzeVoice, generateCharacterImage, generateCharacterImageFromStyleImage, generateSpouseImage } from './services/geminiService';
+import Footer from './components/Footer';
 
 function App() {
   const [appState, setAppState] = useState<AppState>(AppState.START);
@@ -219,11 +220,14 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 flex flex-col items-center justify-center p-4 font-sans transition-colors duration-300">
+    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 flex flex-col items-center p-4 font-sans transition-colors duration-300">
       <ThemeToggle theme={theme} onToggle={toggleTheme} />
-      <div className="w-full max-w-2xl mx-auto">
-        {renderContent()}
-      </div>
+      <main className="w-full max-w-2xl mx-auto flex-grow flex items-center justify-center">
+        <div className="w-full">
+          {renderContent()}
+        </div>
+      </main>
+      <Footer />
     </div>
   );
 }
