@@ -1,16 +1,17 @@
 import React from 'react';
 import { useState, useCallback, useEffect } from 'react';
-import { AppState, ArtStyle, VoiceAnalysisResult } from './types';
+import { AppState, ArtStyle, VoiceAnalysisResult, GeneratorMode } from './types';
 import Landing from './components/Landing';
 import Recorder from './components/Recorder';
 import StyleSelector from './components/StyleSelector';
 import LoadingScreen from './components/LoadingScreen';
 import ResultDisplay from './components/ResultDisplay';
 import ThemeToggle from './components/ThemeToggle';
-import { analyzeVoice, generateCharacterImage, generateCharacterImageFromStyleImage } from './services/geminiService';
+import { analyzeVoice, generateCharacterImage, generateCharacterImageFromStyleImage, generateSpouseImage } from './services/geminiService';
 
 function App() {
   const [appState, setAppState] = useState<AppState>(AppState.START);
+  const [generatorMode, setGeneratorMode] = useState<GeneratorMode | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [analysisResult, setAnalysisResult] = useState<VoiceAnalysisResult | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string>('');
@@ -40,14 +41,19 @@ function App() {
     setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
   };
 
-  const handleStart = () => {
+  const handleStart = (mode: GeneratorMode) => {
     setError(null);
+    setGeneratorMode(mode);
     setAppState(AppState.RECORDING);
   };
 
   const handleRecordingComplete = (blob: Blob) => {
     setAudioBlob(blob);
-    setAppState(AppState.STYLE_SELECTION);
+    if (generatorMode === 'persona') {
+      setAppState(AppState.STYLE_SELECTION);
+    } else if (generatorMode === 'spouse') {
+      handleSpouseGeneration(blob);
+    }
   };
 
   const getAnalysisResult = useCallback(async (): Promise<VoiceAnalysisResult> => {
@@ -92,6 +98,35 @@ function App() {
       setAppState(AppState.START);
     }
   }, [getAnalysisResult]);
+
+  const handleSpouseGeneration = useCallback(async (blob: Blob) => {
+    setAppState(AppState.GENERATING);
+    setError(null);
+    try {
+        const base64Audio = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = () => {
+                if (reader.result) {
+                    resolve((reader.result as string).split(',')[1]);
+                } else {
+                    reject(new Error("Failed to read audio file."));
+                }
+            };
+            reader.onerror = (error) => reject(error);
+        });
+
+        const imageBase64 = await generateSpouseImage(base64Audio, blob.type);
+        setGeneratedImage(imageBase64);
+        setAppState(AppState.RESULT);
+
+    } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
+        setError(errorMessage);
+        setGeneratorMode(null);
+        setAppState(AppState.START);
+    }
+  }, []);
 
   const fileToBase64 = (file: File): Promise<{ base64: string; mimeType: string }> => {
     return new Promise((resolve, reject) => {
@@ -138,6 +173,7 @@ function App() {
     setError(null);
     setAnalysisResult(null);
     setSelectedStyle(null);
+    setGeneratorMode(null);
     setAppState(AppState.START);
   };
 
@@ -161,7 +197,7 @@ function App() {
       case AppState.START:
         return <Landing onStart={handleStart} />;
       case AppState.RECORDING:
-        return <Recorder onRecordingComplete={handleRecordingComplete} />;
+        return <Recorder onRecordingComplete={handleRecordingComplete} generatorMode={generatorMode} />;
       case AppState.STYLE_SELECTION:
         return <StyleSelector onStyleSelect={handleStyleSelection} onStyleImageSelect={handleStyleImageUpload} />;
       case AppState.GENERATING:
@@ -174,6 +210,7 @@ function App() {
             onStyleSelect={handleStyleSelection}
             onStyleImageSelect={handleStyleImageUpload}
             selectedStyleId={selectedStyle?.id}
+            generatorMode={generatorMode}
           />
         );
       default:

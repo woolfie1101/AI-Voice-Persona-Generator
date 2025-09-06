@@ -6,6 +6,8 @@ export enum AppState {
   RESULT,
 }
 
+export type GeneratorMode = 'persona' | 'spouse';
+
 export interface ArtStyle {
   id: string;
   name: string;
@@ -18,4 +20,11 @@ export interface VoiceAnalysisResult {
     characterProfile: string;
     vocalCharacteristics: string[];
     isProfileRich: boolean;
+}
+
+export interface SpouseAnalysisResult {
+    userProfile: string;
+    vocalCharacteristics: string[];
+    requestedSpouseGender: 'man' | 'woman' | 'not specified';
+    isUserProfileRich: boolean;
 }

@@ -2,12 +2,14 @@
 import React from 'react';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { MicIcon, StopIcon } from './Icons';
+import { GeneratorMode } from '../types';
 
 interface RecorderProps {
   onRecordingComplete: (blob: Blob) => void;
+  generatorMode: GeneratorMode | null;
 }
 
-const Recorder: React.FC<RecorderProps> = ({ onRecordingComplete }) => {
+const Recorder: React.FC<RecorderProps> = ({ onRecordingComplete, generatorMode }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [timer, setTimer] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -19,6 +21,8 @@ const Recorder: React.FC<RecorderProps> = ({ onRecordingComplete }) => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+
+  const isPersonaMode = generatorMode === 'persona';
 
   const visualize = useCallback(() => {
     if (!analyserRef.current || !canvasRef.current) return;
@@ -131,18 +135,32 @@ const Recorder: React.FC<RecorderProps> = ({ onRecordingComplete }) => {
   return (
     <div className="text-center p-8 bg-gray-50 dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col items-center transition-colors duration-300">
       <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 mb-4">
-        Record Your Introduction
+        {isPersonaMode ? 'Record Your Introduction' : 'Describe Yourself & Preference'}
       </h2>
       <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-lg">
-        Introduce yourself for 15-30 seconds. State your age, gender, MBTI, race/ethnicity, job, and hobbies for a more detailed persona.
+        {isPersonaMode 
+          ? 'Introduce yourself for 15-30 seconds. State your age, gender, MBTI, race/ethnicity, job, and hobbies for a more detailed persona.'
+          : 'For 15-30 seconds, describe yourself (personality, hobbies, values) and state the desired gender of your future spouse (e.g., "I\'m looking for a man/woman").'
+        }
       </p>
 
       <div className="text-left text-sm text-gray-600 dark:text-gray-500 bg-gray-100 dark:bg-gray-900/50 p-4 rounded-lg mb-6 max-w-lg w-full">
           <p className="font-semibold text-gray-700 dark:text-gray-400">Example:</p>
-          <p className="italic">"I am a 32-year-old male, my MBTI is ENTJ, I am Asian, and I work as a software developer. I enjoy traveling."</p>
-          <p className="mt-2 text-yellow-600/80 dark:text-yellow-400/80">
-              You can start with the topics in the example, but feel free to add any other details about your personality, appearance, or anything else that describes you. The more you share, the more unique your character will be!
-          </p>
+          {isPersonaMode ? (
+            <p className="italic">"I am a 32-year-old male, my MBTI is ENTJ, I am Asian, and I work as a software developer. I enjoy traveling."</p>
+          ) : (
+            <p className="italic">"I'm looking for a woman. I'm a quiet person who loves reading, hiking on weekends, and values honesty and a good sense of humor."</p>
+          )}
+
+          {isPersonaMode ? (
+            <p className="mt-2 text-yellow-600/80 dark:text-yellow-400/80">
+                You can start with the topics in the example, but feel free to add any other details about your personality, appearance, or anything else that describes you. The more you share, the more unique your character will be!
+            </p>
+          ) : (
+             <p className="mt-2 text-yellow-600/80 dark:text-yellow-400/80">
+                Don't worry if you forget to mention a gender; our AI can get creative! The more you share about yourself, the better it can imagine a suitable partner for you.
+            </p>
+          )}
       </div>
       
       <div className="w-full h-24 bg-transparent rounded-lg mb-6 overflow-hidden">

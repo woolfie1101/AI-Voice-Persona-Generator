@@ -1,7 +1,7 @@
 import React from 'react';
 import { DownloadIcon, ShareIcon, RedoIcon } from './Icons';
 import StyleCarousel from './StyleCarousel';
-import { ArtStyle } from '../types';
+import { ArtStyle, GeneratorMode } from '../types';
 
 interface ResultDisplayProps {
   imageBase64: string;
@@ -9,9 +9,10 @@ interface ResultDisplayProps {
   onStyleSelect: (style: ArtStyle) => void;
   onStyleImageSelect: (file: File) => void;
   selectedStyleId?: string;
+  generatorMode: GeneratorMode | null;
 }
 
-const ResultDisplay: React.FC<ResultDisplayProps> = ({ imageBase64, onCreateAgain, onStyleSelect, onStyleImageSelect, selectedStyleId }) => {
+const ResultDisplay: React.FC<ResultDisplayProps> = ({ imageBase64, onCreateAgain, onStyleSelect, onStyleImageSelect, selectedStyleId, generatorMode }) => {
   const imageUrl = `data:image/png;base64,${imageBase64}`;
 
   const handleDownload = () => {
@@ -89,7 +90,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ imageBase64, onCreateAgai
   return (
     <div className="text-center p-8 bg-gray-50 dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 transition-colors duration-300">
       <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 mb-6">
-        Here Is Your Persona!
+        {generatorMode === 'persona' ? 'Here Is Your Persona!' : 'Meet Your Future Spouse!'}
       </h2>
       <div className="mb-6 rounded-lg overflow-hidden shadow-lg border-2 border-purple-500/50 max-w-sm mx-auto">
         <img 
@@ -122,10 +123,12 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ imageBase64, onCreateAgai
         </button>
       </div>
 
-      <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-        <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">Try a different style</h3>
-        <StyleCarousel onStyleSelect={onStyleSelect} selectedStyleId={selectedStyleId} onStyleImageSelect={onStyleImageSelect} />
-      </div>
+      {generatorMode === 'persona' && (
+        <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+          <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">Try a different style</h3>
+          <StyleCarousel onStyleSelect={onStyleSelect} selectedStyleId={selectedStyleId} onStyleImageSelect={onStyleImageSelect} />
+        </div>
+      )}
     </div>
   );
 };
