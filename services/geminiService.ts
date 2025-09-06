@@ -277,26 +277,30 @@ export async function generateSpouseImage(audioBase64: string, mimeType: string)
         const ethnicityAddition = getRandomEthnicity(analysis.userProfile);
 
         const selfieStyleFragment = 'realistic selfie style, taken from a phone camera angle, casual expression, natural lighting, modern background, photorealistic';
-        const finalPrompt = `Generate an image of ${partnerDescription}${ethnicityAddition}. The image should be in a ${selfieStyleFragment}. High quality, detailed, character focus, happy and approachable.`;
+        const finalPrompt = `Generate an image of ${partnerDescription}${ethnicityAddition}. The image should be in a ${selfieStyleFragment}. High quality, detailed, character focus, happy and approachable, 3:4 aspect ratio.`;
 
         console.log("Generating spouse image with prompt:", finalPrompt);
 
         // Step 3: Generate the image
-        const imageResponse = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
-            prompt: finalPrompt,
+        const imageResponse = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image-preview',
+            contents: {
+                parts: [{ text: finalPrompt }]
+            },
             config: {
-                numberOfImages: 1,
-                outputMimeType: 'image/png',
-                aspectRatio: '3:4',
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
             },
         });
-
-        if (imageResponse.generatedImages?.[0]?.image?.imageBytes) {
-            return imageResponse.generatedImages[0].image.imageBytes;
+        
+        if (imageResponse.candidates && imageResponse.candidates.length > 0) {
+            for (const part of imageResponse.candidates[0].content.parts) {
+                if (part.inlineData) {
+                    return part.inlineData.data;
+                }
+            }
         }
 
-        console.error("Spouse image generation failed. Model did not return an image.", imageResponse);
+        console.error("Spouse image generation failed. Model did not return an image part.", imageResponse);
         throw new Error("No image was generated for the future spouse.");
 
     } catch (error) {
