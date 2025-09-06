@@ -7,6 +7,56 @@ if (!process.env.API_KEY) {
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
+/**
+ * Adds a text watermark to a base64 encoded image.
+ * @param base64Image The base64 string of the image (without data URL prefix).
+ * @returns A promise that resolves to the base64 string of the watermarked image.
+ */
+async function addWatermark(base64Image: string): Promise<string> {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                console.error("Could not get canvas context for watermarking. Returning original image.");
+                resolve(base64Image);
+                return;
+            }
+
+            // Draw the original image
+            ctx.drawImage(img, 0, 0);
+
+            // Set watermark properties
+            const watermarkText = 'ai-voice-persona-generator';
+            // Make font size responsive, but not too small or too large
+            const fontSize = Math.max(12, Math.floor(img.width / 35));
+            ctx.font = `bold ${fontSize}px sans-serif`;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)'; // Semi-transparent white
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Draw the watermark text in the center
+            ctx.fillText(watermarkText, canvas.width / 2, canvas.height / 2);
+
+            // Get the watermarked image as a base64 string
+            const watermarkedDataUrl = canvas.toDataURL('image/png');
+            // Return only the base64 part, removing the 'data:image/png;base64,' prefix
+            resolve(watermarkedDataUrl.split(',')[1]);
+        };
+        img.onerror = () => {
+            console.error("Failed to load image for watermarking. Returning original image.");
+            // On error, resolve with the original image to not break the app
+            resolve(base64Image);
+        };
+        // Set the source to the base64 data URL
+        img.src = `data:image/png;base64,${base64Image}`;
+    });
+}
+
 // --- Start of Diversity Enhancement Logic ---
 
 const DIVERSE_ETHNICITIES = [
@@ -41,6 +91,8 @@ function getRandomEthnicity(userDescription: string): string {
 }
 
 // --- End of Diversity Enhancement Logic ---
+
+const NEGATIVE_IMAGE_PROMPT = " CRITICAL: The final image must not contain any text, letters, numbers, writing, or symbols.";
 
 export async function analyzeVoice(audioBase64: string, mimeType: string): Promise<VoiceAnalysisResult> {
     try {
@@ -112,7 +164,7 @@ function constructImagePrompt(analysis: VoiceAnalysisResult, style: ArtStyle): s
         description = constructCharacterDescription(analysis) + ethnicityAddition;
     }
     
-    return `Generate an image based on this description: ${description}. The art style is ${style.promptFragment}. High quality, detailed, character focus.`;
+    return `Generate an image based on this description: ${description}. The art style is ${style.promptFragment}. High quality, detailed, character focus.` + NEGATIVE_IMAGE_PROMPT;
 }
 
 export async function generateCharacterImage(analysis: VoiceAnalysisResult, style: ArtStyle): Promise<string> {
@@ -122,7 +174,7 @@ export async function generateCharacterImage(analysis: VoiceAnalysisResult, styl
             const ethnicityAddition = getRandomEthnicity(analysis.characterProfile);
             description += ethnicityAddition;
 
-            const prompt = `Generate an image based on this description: ${description}. Strictly adhere to the artistic style of the provided image(s). High quality, detailed, character focus.`;
+            const prompt = `Generate an image based on this description: ${description}. Strictly adhere to the artistic style of the provided image(s). High quality, detailed, character focus.` + NEGATIVE_IMAGE_PROMPT;
             console.log("Generating image with predefined style image(s) and prompt:", prompt);
 
             const imageParts = style.referenceImages.map(img => ({
@@ -143,7 +195,7 @@ export async function generateCharacterImage(analysis: VoiceAnalysisResult, styl
             if (response.candidates && response.candidates.length > 0) {
                 for (const part of response.candidates[0].content.parts) {
                     if (part.inlineData) {
-                        return part.inlineData.data;
+                        return addWatermark(part.inlineData.data);
                     }
                 }
             }
@@ -165,7 +217,7 @@ export async function generateCharacterImage(analysis: VoiceAnalysisResult, styl
         if (response.candidates && response.candidates.length > 0) {
             for (const part of response.candidates[0].content.parts) {
                 if (part.inlineData) {
-                    return part.inlineData.data;
+                    return addWatermark(part.inlineData.data);
                 }
             }
         }
@@ -189,7 +241,7 @@ export async function generateCharacterImageFromStyleImage(
         const ethnicityAddition = getRandomEthnicity(analysis.characterProfile);
         description += ethnicityAddition;
         
-        const prompt = `Generate an image based on this description: ${description}. Strictly adhere to the artistic style of the provided image. High quality, detailed, character focus.`;
+        const prompt = `Generate an image based on this description: ${description}. Strictly adhere to the artistic style of the provided image. High quality, detailed, character focus.` + NEGATIVE_IMAGE_PROMPT;
         console.log("Generating image with style image and prompt:", prompt);
         
         const imagePart = {
@@ -210,7 +262,7 @@ export async function generateCharacterImageFromStyleImage(
         if (response.candidates && response.candidates.length > 0) {
             for (const part of response.candidates[0].content.parts) {
                 if (part.inlineData) {
-                    return part.inlineData.data;
+                    return addWatermark(part.inlineData.data);
                 }
             }
         }
@@ -279,7 +331,7 @@ export async function generateSpouseImage(audioBase64: string, mimeType: string)
         const ethnicityAddition = getRandomEthnicity(analysis.userProfile);
 
         const selfieStyleFragment = 'realistic selfie style, taken from a phone camera angle, casual expression, natural lighting, modern background, photorealistic';
-        const finalPrompt = `Generate an image of ${partnerDescription}${ethnicityAddition}, who has a beautiful and handsome face with aesthetically pleasing, well-proportioned features. The image should be in a ${selfieStyleFragment}. High quality, detailed, character focus, happy and approachable.`;
+        const finalPrompt = `Generate an image of ${partnerDescription}${ethnicityAddition}, who has a beautiful and handsome face with aesthetically pleasing, well-proportioned features. The image should be in a ${selfieStyleFragment}. High quality, detailed, character focus, happy and approachable.` + NEGATIVE_IMAGE_PROMPT;
 
         console.log("Generating spouse image with prompt:", finalPrompt);
 
@@ -295,7 +347,7 @@ export async function generateSpouseImage(audioBase64: string, mimeType: string)
         if (imageResponse.candidates && imageResponse.candidates.length > 0) {
             for (const part of imageResponse.candidates[0].content.parts) {
                 if (part.inlineData) {
-                    return part.inlineData.data;
+                    return addWatermark(part.inlineData.data);
                 }
             }
         }
