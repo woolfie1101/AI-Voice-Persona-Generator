@@ -1,0 +1,7 @@
+{
+  "name": "AI Voice Persona Generator",
+  "description": "A web application that creates a unique character image based on the user's voice and self-introduction. Express yourself with an AI-generated persona that captures your personality and vocal tone.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
